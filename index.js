@@ -102,13 +102,15 @@ const serializers = {
     return `${line} PR ${toUrlFormat(item)} in ${toUrlFormat(item.repo.name)}`;
   },
   PullRequestReviewEvent: (item) => {
+    // Requesting also gives this event
+    if (!item.payload.review) return null;
     return `✔️ Reviewed ${toUrlFormat(item)} in ${toUrlFormat(item.repo.name)}`
   },
   ReleaseEvent: (item) => {
     return !item.payload.release.draft
       ? `🏷️ Published release ${toUrlFormat(item)} in ${toUrlFormat(item.repo.name)}`
       : `🔖 Created draft release ${toUrlFormat(item)} in ${toUrlFormat(item.repo.name)}`
-  },
+  }
 };
 
 Toolkit.run(
@@ -122,14 +124,27 @@ Toolkit.run(
     tools.log.debug(
       `Activity for ${GH_USERNAME}, ${events.data.length} events found.`
     );
+    
+    const botsToFilter = [
+      'dependabot[bot]',
+      'dependabot-preview[bot]',
+      'mergify[bot]',
+      'depfu[bot]'
+    ];
 
     const content = events.data
       // Filter out any boring activity
       .filter((event) => serializers.hasOwnProperty(event.type))
-      // We only have five lines to work with
-      .slice(0, MAX_LINES)
+      // Filter out dependabot, it's getting old
+      .filter(event => {
+        if (event.type === 'PullRequestEvent' && botsToFilter.includes(event.payload.pull_request.user.login)) return false;
+        return true;
+      })
       // Call the serializer to construct a string
-      .map((item) => serializers[item.type](item));
+      .map((item) => serializers[item.type](item))
+      .filter(item => !!item)
+      // Truncate lines
+      .slice(0, MAX_LINES);
 
     const readmeContent = fs.readFileSync("./README.md", "utf-8").split("\n");
 
