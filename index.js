@@ -28,9 +28,12 @@ const urlPrefix = "https://github.com";
 
 const toUrlFormat = (item) => {
   if (typeof item === "object") {
-    return Object.hasOwnProperty.call(item.payload, "issue")
-      ? `[#${item.payload.issue.number}](${urlPrefix}/${item.repo.name}/issues/${item.payload.issue.number})`
-      : `[#${item.payload.pull_request.number}](${urlPrefix}/${item.repo.name}/pull/${item.payload.pull_request.number})`;
+    if (Object.hasOwnProperty.call(item.payload, "issue"))
+       return `[#${item.payload.issue.number}](${urlPrefix}/${item.repo.name}/issues/${item.payload.issue.number})`
+    else if (Object.hasOwnProperty.call(item.payload, "pull_request"))
+      return `[#${item.payload.pull_request.number}](${urlPrefix}/${item.repo.name}/pull/${item.payload.pull_request.number})`;
+    else if (Object.hasOwnProperty.call(item.payload, "release"))
+      return `[${item.payload.release.tag_name}](${urlPrefix}/${item.repo.name}/releases/tag/${item.payload.release.tag_name})`;
   }
   return `[${item}](${urlPrefix}/${item})`;
 };
@@ -97,6 +100,14 @@ const serializers = {
       ? "🎉 Merged"
       : `${emoji} ${capitalize(item.payload.action)}`;
     return `${line} PR ${toUrlFormat(item)} in ${toUrlFormat(item.repo.name)}`;
+  },
+  PullRequestReviewEvent: (item) => {
+    return `✔️ Reviewed ${toUrlFormat(item)} in ${toUrlFormat(item.repo.name)}`
+  },
+  ReleaseEvent: (item) => {
+    return !item.payload.release.draft
+      ? `🏷️ Published release ${toUrlFormat(item)} in ${toUrlFormat(item.repo.name)}`
+      : `🔖 Created draft release ${toUrlFormat(item)} in ${toUrlFormat(item.repo.name)}`
   },
 };
 
