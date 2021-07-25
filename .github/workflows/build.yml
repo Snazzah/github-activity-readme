@@ -1,0 +1,35 @@
+name: Build
+
+on:
+  push:
+    paths:
+      - "index.js"
+      - "package.json"
+      - ".github/workflows/build.yml"
+  pull_request:
+    paths:
+      - "index.js"
+      - "package.json"
+      - ".github/workflows/build.yml"
+
+jobs:
+  build:
+    name: Generate build and check code formatting
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js 12.x
+        uses: actions/setup-node@v1
+        with:
+          node-version: 12
+      - run: npm ci
+      - run: npm run build
+      - name: Commit changes
+        uses: EndBug/add-and-commit@v4
+        with:
+          add: dist/index.js
+          message: "chore: auto-build source code"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
