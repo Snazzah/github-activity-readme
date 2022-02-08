@@ -140,6 +140,11 @@ Toolkit.run(
         if (event.type === 'PullRequestEvent' && botsToFilter.includes(event.payload.pull_request.user.login)) return false;
         return true;
       })
+      // Filter out comments to dependabot
+      .filter(event => {
+        if (event.type === 'IssueCommentEvent' && event.payload.comment.body.startsWith('@dependabot')) return false;
+        return true;
+      })
       // Call the serializer to construct a string
       .map((item) => serializers[item.type](item))
       .filter(item => !!item)
