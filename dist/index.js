@@ -15794,7 +15794,8 @@ Toolkit.run(
       'dependabot[bot]',
       'dependabot-preview[bot]',
       'mergify[bot]',
-      'depfu[bot]'
+      'depfu[bot]',
+      'renovate[bot]'
     ];
 
     const content = events.data
